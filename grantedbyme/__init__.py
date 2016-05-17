@@ -1,8 +1,29 @@
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2016 GrantedByMe
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
 """
-GrantedByMe Python SDK Module Main
-
-Copyright (c) 2016 grantedby.me
-
+GrantedByMe Python SDK
 .. moduleauthor:: GrantedByMe <info@grantedby.me>
 """
 # -*- coding: utf-8 -*-
@@ -29,12 +50,12 @@ class TokenType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.8'
+    VERSION = '1.0.9'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
 
     def __init__(self, private_key=None, private_key_file=None, server_key=None, server_key_file=None, api_url=None):
-        """TBD"""
+        """Constructor"""
         self.private_key = private_key
         self.server_key = server_key
         if not private_key and private_key_file and os.path.isfile(private_key_file):
@@ -69,7 +90,6 @@ class GrantedByMe(object):
         if not self.server_key:
             handshake = self._activate_handshake()
             if handshake and handshake['success'] and handshake['public_key']:
-                # print(handshake['public_key'])
                 self.server_key = handshake['public_key']
         # API call
         params = self.get_params()
@@ -151,5 +171,4 @@ class GrantedByMe(object):
         result = {
             'timestamp': int(time.time())
         }
-        # print(str(result))
         return result
