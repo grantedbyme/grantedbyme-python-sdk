@@ -50,7 +50,7 @@ class TokenType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.10'
+    VERSION = '1.0.11'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
 
