@@ -10,3 +10,9 @@
 ### Install `pip3` packages
 
 > $ sudo -H python3 -m pip install -r requirements.txt
+
+### Install `grantedbyme` python package
+
+You can learn about how to install python packages here:
+
+> https://python-packaging-user-guide.readthedocs.io/en/latest/installing/
