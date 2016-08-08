@@ -414,7 +414,7 @@ class GBMCrypto(object):
         # serialize dictionary to json string
         plain_text = json.dumps(data)
         # Message length is small enough to use signed RSA encryption only
-        if len(plain_text) < 255 and is_optional_compound:
+        if len(plain_text) < 215 and is_optional_compound:
             rsa_tuple = GBMCrypto.encrypt_rsa_json(public_key, private_key, plain_text, algorithm)
             return {'payload': rsa_tuple[0], 'signature': rsa_tuple[1]}
         # Use signed AES encryption using keys wrapped in signed RSA encryption
