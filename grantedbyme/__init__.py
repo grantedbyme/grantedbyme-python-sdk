@@ -50,7 +50,7 @@ class TokenType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.4'
+    VERSION = '1.0.5'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
 
@@ -129,23 +129,21 @@ class GrantedByMe(object):
 
     def get_token(self, type, client_ip=None, client_ua=None):
         """Retrieve a new token for type"""
-        params = self.get_params()
+        params = self.get_params(client_ip, client_ua)
         params['token_type'] = type
-        if client_ua:
-            params['http_user_agent'] = client_ua
-        if client_ip:
-            params['remote_addr'] = client_ip
         return self.post(params, 'get_session_token')
 
     def get_token_state(self, token, client_ip=None, client_ua=None):
         """Retrieve an existing token state"""
+        params = self.get_params(client_ip, client_ua)
+        params['token'] = token
+        return self.post(params, 'get_session_state')
+
+    def revoke_session_token(self, token, client_ip=None, client_ua=None):
+        """Revokes an active session token"""
         params = self.get_params()
         params['token'] = token
-        if client_ua:
-            params['http_user_agent'] = client_ua
-        if client_ip:
-            params['remote_addr'] = client_ip
-        return self.post(params, 'get_session_state')
+        return self.post(params, 'revoke_session_token')
 
     def post(self, params, operation):
         """Sends a HTTP POST message"""
@@ -166,9 +164,13 @@ class GrantedByMe(object):
         }
         return result
 
-    def get_params(self):
+    def get_params(self, client_ip=None, client_ua=None):
         """Returns the default POST parameter dictionary"""
         result = {
             'timestamp': int(time.time())
         }
+        if client_ip:
+            result['remote_addr'] = client_ip
+        if client_ua:
+            result['http_user_agent'] = client_ua
         return result
