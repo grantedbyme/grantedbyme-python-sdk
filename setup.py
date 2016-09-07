@@ -25,7 +25,7 @@
 from setuptools import setup
 
 setup(name='grantedbyme',
-      version='1.0.6',
+      version='1.0.7',
       description='Instant secure login without password',
       url='https://github.com/grantedbyme/grantedbyme-python-sdk',
       author='GrantedByMe',
