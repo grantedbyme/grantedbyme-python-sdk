@@ -37,7 +37,7 @@ import requests
 from .gbm_crypto import GBMCrypto
 
 
-class TokenType(Enum):
+class ChallengeType(Enum):
     """TokenType Enumerations"""
     unknown = 0
     account = 1
@@ -50,122 +50,128 @@ class TokenType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.11'
+    VERSION = '1.0.12'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
+    USER_AGENT = 'GrantedByMe/' + VERSION + '-' + BRANCH + ' (Python)'
 
     def __init__(self, private_key=None, private_key_file=None, server_key=None, server_key_file=None, api_url=None):
-        """Constructor"""
+        """
+        Creates a new GrantedByMe SDK instance.
+        :param private_key: Service RSA private key encoded in PEM format
+        :param private_key_file: The path to the service RSA private key
+        :param server_key: Server RSA public key encoded in PEM format
+        :param server_key_file: The path to the server RSA public key
+        :param api_url: The API server url
+        :return:
+        """
         self.private_key = private_key
         self.server_key = server_key
         if not private_key and private_key_file and os.path.isfile(private_key_file):
             self.private_key = open(private_key_file).read()
         if not server_key and server_key_file and os.path.isfile(server_key_file):
             self.server_key = open(server_key_file).read()
-        self.api_version = 'v1'
-        self.api_resource = 'service'
         if api_url:
             self.api_url = api_url
         else:
             self.api_url = GrantedByMe.API_URL
 
     def _activate_handshake(self):
-        """Activation RSA key exchange"""
+        """
+        Initiate key exchange for encrypted communication.
+        :return:
+        """
         private_key = GBMCrypto.load_private_key(self.private_key.encode('utf-8'))
         public_key = GBMCrypto.serialize_key(private_key.public_key()).decode('utf-8')
-        params = {
-            'public_key': public_key,
-            'timestamp': int(time.time())
-        }
-        response = requests.post(self.api_url + 'activate_handshake/', json=params, headers=self.get_headers())
-        return response.json()
+        params = self.get_params()
+        params['public_key'] = public_key
+        return self.post(params, 'activate_handshake')
 
     def activate_service(self, service_key):
-        """Service activation"""
-        # generate RSA key pair if not exists
-        if not self.private_key:
-            private_rsa = GBMCrypto.generate_keypair()
-            self.private_key = GBMCrypto.serialize_key(private_rsa).decode('utf-8')
-        # get server public key if not exists
-        if not self.server_key:
-            handshake = self._activate_handshake()
-            if handshake and handshake['success'] and handshake['public_key']:
-                self.server_key = handshake['public_key']
+        """
+        Active pending service using service key.
+        :param service_key: The activation service key
+        :return:
+        """
+        # generate RSA key pair
+        private_rsa = GBMCrypto.generate_keypair()
+        self.private_key = GBMCrypto.serialize_key(private_rsa).decode('utf-8')
+        # get server public key
+        handshake = self._activate_handshake()
+        if handshake and handshake['success'] and handshake['public_key']:
+            self.server_key = handshake['public_key']
         # API call
         params = self.get_params()
-        params['grantor'] = GBMCrypto.random_string()
         params['service_key'] = service_key
         return self.post(params, 'activate_service')
 
-    def deactivate_service(self):
-        """Service deactivation"""
+    def link_account(self, challenge, authenticator_secret):
+        """
+        Links a service user account with a GrantedByMe account.
+        :param challenge: The challenge used to verify the user
+        :param authenticator_secret: The secret used for user authentication
+        :return:
+        """
         params = self.get_params()
-        return self.post(params, 'deactivate_service')
-
-    def link_account(self, token, grantor):
-        """User account creation"""
-        params = self.get_params()
-        params['token'] = token
-        params['grantor'] = grantor
+        params['challenge'] = challenge
+        params['authenticator_secret'] = authenticator_secret
         return self.post(params, 'link_account')
 
-    def unlink_account(self, grantor):
-        """User account deletion"""
+    def unlink_account(self, authenticator_secret):
+        """
+        Un-links a service user account with a GrantedByMe account.
+        :param authenticator_secret: The secret used for user authentication
+        :return:
+        """
         params = self.get_params()
-        params['grantor'] = GBMCrypto.sha512(grantor)
+        params['authenticator_secret'] = authenticator_secret
         return self.post(params, 'unlink_account')
 
-    def get_session_token(self, client_ip=None, client_ua=None):
-        """Helper method for session token creation"""
-        return self.get_token(TokenType.session.value, client_ip, client_ua)
-
-    def get_account_token(self, client_ip=None, client_ua=None):
-        """Helper method for account token creation"""
-        return self.get_token(TokenType.account.value, client_ip, client_ua)
-
-    def get_register_token(self, client_ip=None, client_ua=None):
-        """Helper method for registration token creation"""
-        return self.get_token(TokenType.activate.value, client_ip, client_ua)
-
-    def get_token(self, type, client_ip=None, client_ua=None):
-        """Retrieve a new token for type"""
+    def get_challenge(self, challenge_type, client_ip=None, client_ua=None):
+        """
+        Returns a challenge with required type.
+        :param challenge_type: The type of requested challenge
+        :param client_ip: The client IP address
+        :param client_ua: The client user-agent identifier
+        :return:
+        """
         params = self.get_params(client_ip, client_ua)
-        params['token_type'] = type
-        return self.post(params, 'get_session_token')
+        params['challenge_type'] = challenge_type
+        return self.post(params, 'get_challenge')
 
-    def get_token_state(self, token, client_ip=None, client_ua=None):
-        """Retrieve an existing token state"""
+    def get_challenge_state(self, challenge, client_ip=None, client_ua=None):
+        """
+        Returns a challenge state.
+        :param challenge: The challenge to check
+        :param client_ip: The client IP address
+        :param client_ua: The client user-agent identifier
+        :return:
+        """
         params = self.get_params(client_ip, client_ua)
-        params['token'] = token
-        return self.post(params, 'get_session_state')
+        params['challenge'] = challenge
+        return self.post(params, 'get_challenge_state')
 
-    def revoke_session_token(self, token, client_ip=None, client_ua=None):
-        """Revokes an active session token"""
+    def revoke_challenge(self, challenge):
+        """
+        Notify the GrantedByMe server about the user has been logged out from the service.
+        :param challenge: The challenge representing an active authentication session
+        :return:
+        """
         params = self.get_params()
-        params['token'] = token
-        return self.post(params, 'revoke_session_token')
+        params['challenge'] = challenge
+        return self.post(params, 'revoke_challenge')
 
-    def post(self, params, operation):
-        """Sends a HTTP POST message"""
-        encrypted_params = GBMCrypto.encrypt_compound(params, self.server_key, self.private_key)
-        encrypted_params['public_hash'] = GBMCrypto.sha512(self.server_key)
-        page_url = self.api_url + operation + '/'
-        response = requests.post(page_url, json=encrypted_params, headers=self.get_headers())
-        return GBMCrypto.decrypt_compound(response.json(), self.server_key, self.private_key)
-
-    def get_ua(self):
-        """Returns the SDK user agent string"""
-        return 'GrantedByMe/' + GrantedByMe.VERSION + '-' + GrantedByMe.BRANCH + ' (Python)'
-
-    def get_headers(self):
-        """Returns the default header dictionary"""
-        result = {
-            'user-agent': self.get_ua()
-        }
-        return result
+    ########################################
+    # Helpers
+    ########################################
 
     def get_params(self, client_ip=None, client_ua=None):
-        """Returns the default POST parameter dictionary"""
+        """
+        Returns the default HTTP parameters.
+        :param client_ip: The client IP address
+        :param client_ua: The client user-agent identifier
+        :return:
+        """
         result = {
             'timestamp': int(time.time())
         }
@@ -174,3 +180,40 @@ class GrantedByMe(object):
         if client_ua:
             result['http_user_agent'] = client_ua
         return result
+
+    def post(self, params, operation):
+        """
+        Sends a HTTP (POST) API request.
+        :param params: The request parameter object
+        :param operation: The API operation name
+        :return:
+        """
+        if operation == 'activate_handshake':
+            encrypted_params = params
+        else:
+            encrypted_params = GBMCrypto.encrypt_compound(params, self.server_key, self.private_key)
+            encrypted_params['public_hash'] = GBMCrypto.sha512(self.server_key)
+        page_url = self.api_url + operation + '/'
+        response = requests.post(page_url, json=encrypted_params, headers={'user-agent': GrantedByMe.USER_AGENT})
+        return GBMCrypto.decrypt_compound(response.json(), self.server_key, self.private_key)
+
+    ########################################
+    # Static
+    ########################################
+
+    @classmethod
+    def generate_authenticator_secret(cls):
+        """
+        Generates a secure random authenticator secret.
+        :return:
+        """
+        return GBMCrypto.random_string(128)
+
+    @classmethod
+    def hash_authenticator_secret(cls, authenticator_secret):
+        """
+        Generates hash digest of an authenticator secret.
+        :param authenticator_secret: The authenticator secret to hash
+        :return:
+        """
+        return GBMCrypto.sha512(authenticator_secret)

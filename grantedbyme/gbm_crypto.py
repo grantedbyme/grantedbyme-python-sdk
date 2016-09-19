@@ -249,7 +249,10 @@ class GBMCrypto(object):
             except:
                 raise SecurityException('Invalid signature')
         message_text = message_bytes.decode('utf-8')
-        result = json.loads(message_text)
+        try:
+            result = json.loads(message_text)
+        except:
+            raise Exception('Invalid RSA-JSON: ' + str(message_text))
         return result
 
     ########################################
@@ -347,7 +350,10 @@ class GBMCrypto(object):
         signature = base64.b64decode(signature)
         GBMCrypto.verify_aes(message_bytes, key, signature)
         message_text = message_bytes.decode('utf-8')
-        result = json.loads(message_text)
+        try:
+            result = json.loads(message_text)
+        except:
+            raise Exception('Invalid AES-JSON: ' + str(message_text))
         return result
 
     ########################################
