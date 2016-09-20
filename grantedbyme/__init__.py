@@ -38,19 +38,16 @@ from .gbm_crypto import GBMCrypto
 
 
 class ChallengeType(Enum):
-    """TokenType Enumerations"""
-    unknown = 0
-    account = 1
-    session = 2
-    authorize = 3
-    activate = 4
-    deactivate = 5
+    """ChallengeType Enumerations"""
+    authorize = 1
+    authenticate = 2
+    profile = 4
 
 
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.12'
+    VERSION = '1.0.14'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
     USER_AGENT = 'GrantedByMe/' + VERSION + '-' + BRANCH + ' (Python)'
@@ -104,6 +101,14 @@ class GrantedByMe(object):
         params = self.get_params()
         params['service_key'] = service_key
         return self.post(params, 'activate_service')
+
+    def deactivate_service(self):
+        """
+        Deactivate service for reactivation.
+        :return:
+        """
+        params = self.get_params()
+        return self.post(params, 'deactivate_service')
 
     def link_account(self, challenge, authenticator_secret):
         """
