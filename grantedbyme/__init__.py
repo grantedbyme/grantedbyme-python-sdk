@@ -47,7 +47,7 @@ class ChallengeType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.14'
+    VERSION = '1.0.15'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
     USER_AGENT = 'GrantedByMe/' + VERSION + '-' + BRANCH + ' (Python)'
@@ -102,14 +102,6 @@ class GrantedByMe(object):
         params['service_key'] = service_key
         return self.post(params, 'activate_service')
 
-    def deactivate_service(self):
-        """
-        Deactivate service for reactivation.
-        :return:
-        """
-        params = self.get_params()
-        return self.post(params, 'deactivate_service')
-
     def link_account(self, challenge, authenticator_secret):
         """
         Links a service user account with a GrantedByMe account.
@@ -121,16 +113,6 @@ class GrantedByMe(object):
         params['challenge'] = challenge
         params['authenticator_secret'] = authenticator_secret
         return self.post(params, 'link_account')
-
-    def unlink_account(self, authenticator_secret):
-        """
-        Un-links a service user account with a GrantedByMe account.
-        :param authenticator_secret: The secret used for user authentication
-        :return:
-        """
-        params = self.get_params()
-        params['authenticator_secret'] = authenticator_secret
-        return self.post(params, 'unlink_account')
 
     def get_challenge(self, challenge_type, client_ip=None, client_ua=None):
         """
