@@ -47,7 +47,7 @@ class ChallengeType(Enum):
 class GrantedByMe(object):
     """GrantedByMe class"""
 
-    VERSION = '1.0.15'
+    VERSION = '1.0.16'
     BRANCH = 'master'
     API_URL = 'https://api.grantedby.me/v1/service/'
     USER_AGENT = 'GrantedByMe/' + VERSION + '-' + BRANCH + ' (Python)'
